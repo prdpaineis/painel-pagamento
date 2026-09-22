@@ -1,0 +1,17 @@
+# credenciais do Odoo - NUNCA commitar
+*.env
+!*.env.example
+
+# dados brutos extraidos: NAO publicados, so o docs/index.html gerado a partir
+# deles (dados curados, embutidos, publicados de proposito)
+docs/dados.json
+docs/artefato.html
+
+# python
+__pycache__/
+*.pyc
+
+# sistema
+Thumbs.db
+desktop.ini
+.DS_Store

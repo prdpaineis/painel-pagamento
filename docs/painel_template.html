@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<!--ARTEFATO-->
+<title>Esteira de Pagamento</title>
+<style>
+/* tema claro e preto no branco: tokens completos aqui, so os valores mudam no escuro */
+:root{
+  --bg:#f3f6fa; --card:#ffffff; --card2:#f7f9fc; --line:#dde4ee;
+  --txt:#16202c; --dim:#5b6b7f; --faint:#aab6c6; --hover:#16202c08;
+  --accent:#2f5fd0; --ok:#12704a; --warn:#96560a; --bad:#bb3427; --cli:#6b34bd;
+  --cli-bg:#6b34bd12; --cli-bd:#6b34bd4d;
+  --bad-bg:#bb342712; --bad-bd:#bb34274d;
+  --ok-bg:#12704a12;  --ok-bd:#12704a4d;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1419; --card:#171d26; --card2:#1e2633; --line:#2b3542;
+    --txt:#e6edf3; --dim:#8b98a9; --faint:#3a4453; --hover:#ffffff0a;
+    --accent:#4c8dff; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --cli:#a371f7;
+    --cli-bg:#a371f715; --cli-bd:#a371f755;
+    --bad-bg:#f8514915; --bad-bd:#f8514955;
+    --ok-bg:#3fb95015;  --ok-bd:#3fb95055;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1419; --card:#171d26; --card2:#1e2633; --line:#2b3542;
+  --txt:#e6edf3; --dim:#8b98a9; --faint:#3a4453; --hover:#ffffff0a;
+  --accent:#4c8dff; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --cli:#a371f7;
+  --cli-bg:#a371f715; --cli-bd:#a371f755;
+  --bad-bg:#f8514915; --bad-bd:#f8514955;
+  --ok-bg:#3fb95015;  --ok-bd:#3fb95055;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);
+     font:14px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif;
+     font-variant-numeric:tabular-nums}
+header{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+h1{margin:0;font-size:19px;font-weight:600;letter-spacing:.2px}
+.sub{color:var(--dim);font-size:12px}
+main{padding:20px 24px 60px;max-width:1500px;margin:0 auto}
+.filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end}
+.f label{display:block;font-size:11px;color:var(--dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+select,input{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font:inherit;min-width:170px}
+button{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:7px 13px;font:inherit;cursor:pointer}
+button:hover{border-color:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.kpi .n{font-size:27px;font-weight:600;line-height:1.1}
+.kpi .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-top:5px}
+.kpi .e{font-size:11px;color:var(--dim);margin-top:3px}
+.kpi.cli .n{color:var(--cli)} .kpi.bad .n{color:var(--bad)} .kpi.warn .n{color:var(--warn)} .kpi.ok .n{color:var(--ok)}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:20px}
+section h2{margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--dim);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none}
+th:hover{color:var(--txt)}
+tbody tr:hover{background:var(--hover)}
+tfoot td{font-weight:600;border-top:2px solid var(--line);border-bottom:none}
+.z{color:var(--faint)}
+.bar{height:6px;border-radius:3px;background:var(--accent);display:inline-block;vertical-align:middle}
+.tag{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;border:1px solid var(--line)}
+.t-cli{color:var(--cli);border-color:var(--cli-bd);background:var(--cli-bg)}
+.t-rec{color:var(--bad);border-color:var(--bad-bd);background:var(--bad-bg)}
+.t-ok{color:var(--ok);border-color:var(--ok-bd);background:var(--ok-bg)}
+.t-neu{color:var(--dim)}
+.wrap{overflow-x:auto}
+.det td{font-size:12.5px}
+.muted{color:var(--dim);font-size:12px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.row2{grid-template-columns:1fr}}
+.bloco{border-left:3px solid var(--etapa);padding-left:16px}
+.bloco.b1{--etapa:var(--accent)} .bloco.b2{--etapa:var(--ok)}
+.bloco > h2{display:flex;align-items:center;gap:10px;font-size:15px;text-transform:none;
+  letter-spacing:0;color:var(--txt);margin-bottom:4px}
+.bloco > h2 .dot{width:9px;height:9px;border-radius:50%;background:var(--etapa);flex:none}
+.bloco > h2 .qt{color:var(--dim);font-weight:400;font-size:13px}
+.bloco .nota{color:var(--dim);font-size:12px;margin:0 0 14px}
+.bloco h3{margin:0 0 9px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);font-weight:600}
+.sub-card{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:13px 15px}
+.geral{border-left:3px solid var(--dim);padding-left:16px}
+.vazio{color:var(--dim);font-size:12.5px;padding:8px 0}
+.so{color:var(--faint);text-transform:none;letter-spacing:0}
+</style>
+<header>
+  <h1>Esteira de Pagamento &mdash; pend&ecirc;ncias em aberto</h1>
+  <span class="sub" id="cab"></span>
+</header>
+<main>
+  <div class="filtros">
+    <div class="f"><label>A&ccedil;&atilde;o</label><select id="fAcao"></select></div>
+    <div class="f"><label>Grupo</label><select id="fGrupo"></select></div>
+    <div class="f"><label>Tipo da pend&ecirc;ncia <span class="so">(s&oacute; Verificar)</span></label><select id="fTipo"></select></div>
+    <div class="f"><label>Idade</label><select id="fFaixa"></select></div>
+    <div class="f"><label>Busca (caso / grupo / fase)</label><input id="fBusca" placeholder="digite..."></div>
+    <div class="f"><button id="btnLimpar">Limpar</button></div>
+    <div class="f"><button id="btnCsv">Exportar CSV</button></div>
+  </div>
+
+  <section class="geral">
+    <h2>Vis&atilde;o geral &mdash; Grupo &times; etapa da esteira</h2>
+    <div class="wrap"><table id="tGeral"></table></div>
+  </section>
+
+  <div id="blocos"></div>
+
+  <section>
+    <h2>Detalhe <span class="muted" id="detInfo"></span></h2>
+    <div class="wrap"><table id="tDet" class="det"></table></div>
+  </section>
+</main>
+
+<noscript>
+  <div style="margin:24px;padding:16px;border:1px solid #f85149;border-radius:8px;color:#f85149">
+    O JavaScript est&aacute; desativado neste navegador &mdash; o painel n&atilde;o consegue montar as tabelas.
+    Abra o arquivo no Chrome ou no Edge.
+  </div>
+</noscript>
+<script>
+// se algo quebrar, mostra na tela em vez de deixar a pagina em branco
+window.onerror = function(msg, arq, lin, col){
+  const d = document.createElement('div');
+  d.style.cssText = 'margin:24px;padding:16px;border:1px solid #f85149;border-radius:8px;'+
+                    'color:#f85149;font-family:monospace;font-size:13px;white-space:pre-wrap';
+  d.textContent = 'Erro ao montar o painel:\n' + msg + '\n(linha ' + lin + ', coluna ' + col + ')';
+  document.body.insertBefore(d, document.body.firstChild);
+};
+const DADOS = /*__DADOS__*/null;
+const SET_CLI = new Set(DADOS.pendente_cliente);
+const SET_REC = new Set(DADOS.recusa);
+const FAIXAS  = DADOS.faixas;
+const brl = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const num = v => v.toLocaleString('pt-BR');
+const el  = id => document.getElementById(id);
+const alvo = x => typeof x === 'string' ? el(x) : x;
+
+(function(){
+  const c = {};
+  DADOS.itens.forEach(i => c[i.acao] = (c[i.acao]||0)+1);
+  el('cab').textContent =
+    num(DADOS.itens.length) + ' pendências abertas — ' +
+    Object.keys(c).sort().map(k => num(c[k]) + ' em ' + k.replace(' pagamento','')).join(' · ') +
+    ' · gerado em ' + DADOS.gerado_em;
+})();
+
+function opcoes(sel, vals, rotuloTodos){
+  sel.innerHTML = '<option value="">' + rotuloTodos + '</option>' +
+    vals.map(v => '<option>' + v + '</option>').join('');
+}
+const unicos = campo => [...new Set(DADOS.itens.map(i=>i[campo]))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+opcoes(el('fAcao'),  unicos('acao'),  'Todas as ações');
+opcoes(el('fGrupo'), unicos('grupo'), 'Todos os grupos');
+// o tipo de pendencia so existe no Verificar, entao a lista sai de la
+opcoes(el('fTipo'),
+  [...new Set(DADOS.itens.filter(i=>i.acao==='Verificar pagamento').map(i=>i.tipo))]
+    .sort((a,b)=>a.localeCompare(b,'pt-BR')),
+  'Todos os tipos');
+opcoes(el('fFaixa'), FAIXAS.filter(f=>DADOS.itens.some(i=>i.faixa===f)), 'Qualquer idade');
+
+function filtrados(){
+  const a=el('fAcao').value, g=el('fGrupo').value, t=el('fTipo').value,
+        f=el('fFaixa').value, b=el('fBusca').value.trim().toLowerCase();
+  return DADOS.itens.filter(i =>
+    (!a||i.acao===a) && (!g||i.grupo===g) && (!t||i.tipo===t) && (!f||i.faixa===f) &&
+    (!b || (i.caso+' '+i.grupo+' '+i.fase).toLowerCase().includes(b)));
+}
+
+const classeTipo = t => SET_CLI.has(t) ? 't-cli' : SET_REC.has(t) ? 't-rec'
+                      : t==='Contabilizado' ? 't-ok' : 't-neu';
+
+function kpis(destino, it, etapa){
+  const qt  = f => it.filter(f).length;
+  const pct = n => (it.length ? Math.round(n / it.length * 100) : 0) + '% da etapa';
+  const vel = qt(i => i.dias > 30);
+  const medi = it.length ? Math.round(it.reduce((s,i)=>s+i.dias,0)/it.length) : 0;
+  const valor = it.reduce((s,i)=>s+i.valor,0);
+  const grupos = new Set(it.map(i=>i.grupo)).size;
+
+  let cards;
+  const maisVelha = it.length ? Math.max(...it.map(i=>i.dias)) : 0;
+  const valorParado = it.filter(i=>i.dias>30).reduce((s,i)=>s+i.valor,0);
+
+  if (etapa === 'Solicitar pagamento'){
+    // aqui o tipo de pendencia nao e preenchido: o que mede a etapa e idade e dinheiro parado
+    cards = [
+      ['',     num(it.length), 'Solicitações em aberto', num(grupos) + ' grupos'],
+      ['warn', num(vel),       'Paradas há +30 dias', pct(vel)],
+      ['bad',  maisVelha+' d', 'Mais antiga', 'maior espera da etapa'],
+      ['',     medi + ' d',    'Idade média', 'desde o criado em'],
+      ['ok',   brl(valor),     'Valor em aberto', 'soma do valor do pagamento'],
+      ['warn', brl(valorParado), 'Valor parado +30 dias',
+               (valor ? Math.round(valorParado/valor*100) : 0) + '% do valor da etapa'],
+    ];
+  } else {
+    const sol = qt(i => i.tipo === 'Solicitado');
+    const cli = qt(i => SET_CLI.has(i.tipo));
+    const rec = it.filter(i => SET_REC.has(i.tipo));
+    const exp = qt(i => i.tipo === 'Expirado');
+    cards = [
+      ['',     num(it.length), 'Verificações em aberto', num(grupos) + ' grupos'],
+      ['',     num(sol),       'Aguardando pagamento', 'tipo Solicitado · ' + pct(sol)],
+      ['cli',  num(cli),       'Pendente com o cliente', 'tipo ' + DADOS.pendente_cliente.join(', ') + ' · ' + pct(cli)],
+      ['bad',  num(rec.length),'Recusas', rec.length ? [...new Set(rec.map(i=>i.tipo))].join(' · ') : 'nenhuma em aberto'],
+      ['warn', num(exp),       'Expirado', 'prazo estourado'],
+      ['warn', num(vel),       'Paradas há +30 dias', pct(vel)],
+      ['',     medi + ' d',    'Idade média', 'desde o criado em'],
+      ['ok',   brl(valor),     'Valor em aberto', 'soma do valor do pagamento'],
+      ['warn', brl(valorParado), 'Valor parado +30 dias',
+               (valor ? Math.round(valorParado/valor*100) : 0) + '% do valor da etapa'],
+    ];
+  }
+  destino.innerHTML = cards.map(c =>
+    '<div class="kpi '+c[0]+'"><div class="n">'+c[1]+'</div><div class="l">'+c[2]+'</div><div class="e">'+c[3]+'</div></div>').join('');
+}
+
+function desenhaPivot(tabelaId, it, linhaCampo, colunaCampo, colunasOrdem, rotuloLinha){
+  const m = {};
+  it.forEach(i=>{
+    const r = i[linhaCampo];
+    if(!m[r]) m[r] = {};
+    m[r][i[colunaCampo]] = (m[r][i[colunaCampo]]||0)+1;
+  });
+  let cols;
+  if(colunasOrdem){
+    cols = colunasOrdem.filter(c=>it.some(i=>i[colunaCampo]===c));
+  } else {
+    const tot = {};
+    it.forEach(i=>tot[i[colunaCampo]] = (tot[i[colunaCampo]]||0)+1);
+    cols = Object.keys(tot).sort((a,b)=>tot[b]-tot[a]);
+  }
+  const soma = o => Object.values(o).reduce((x,y)=>x+y,0);
+  const linhas = Object.keys(m).sort((a,b)=>soma(m[b])-soma(m[a]));
+  const cab = '<thead><tr><th>'+rotuloLinha+'</th>' +
+    cols.map(c=>'<th><span class="tag '+classeTipo(c)+'">'+c+'</span></th>').join('') +
+    '<th>Total</th></tr></thead>';
+  const corpo = '<tbody>' + linhas.map(l =>
+    '<tr><td>'+l+'</td>' + cols.map(c=>{
+      const v = m[l][c]||0;
+      return '<td class="'+(v?'':'z')+'">'+(v||'·')+'</td>';
+    }).join('') + '<td><b>'+num(soma(m[l]))+'</b></td></tr>').join('') + '</tbody>';
+  const rod = '<tfoot><tr><td>Total</td>' +
+    cols.map(c=>'<td>'+num(it.filter(i=>i[colunaCampo]===c).length)+'</td>').join('') +
+    '<td>'+num(it.length)+'</td></tr></tfoot>';
+  alvo(tabelaId).innerHTML = cab + corpo + rod;
+}
+
+function desenhaRanking(tabelaId, it, campo, rotulo, ordem, limite){
+  const c = {};
+  it.forEach(i=>c[i[campo]] = (c[i[campo]]||0)+1);
+  let chaves = ordem ? ordem.filter(k=>c[k]) : Object.keys(c).sort((a,b)=>c[b]-c[a]);
+  if (limite && chaves.length > limite){
+    const resto = chaves.slice(limite);
+    const soma = resto.reduce((s,k)=>s+c[k],0);
+    chaves = chaves.slice(0, limite);
+    c['(outros ' + resto.length + ')'] = soma;
+    chaves.push('(outros ' + resto.length + ')');
+  }
+  const max = Math.max(1, ...chaves.map(k=>c[k]));
+  alvo(tabelaId).innerHTML =
+    '<thead><tr><th>'+rotulo+'</th><th>Qtde</th><th>%</th><th style="width:34%"></th></tr></thead><tbody>' +
+    chaves.map(k=>'<tr><td><span class="tag '+classeTipo(k)+'">'+k+'</span></td><td>'+num(c[k])+'</td>' +
+      '<td>'+(it.length?(c[k]/it.length*100).toFixed(1):0)+'%</td>' +
+      '<td style="text-align:left"><span class="bar" style="width:'+(c[k]/max*100)+'%"></span></td></tr>').join('') +
+    '</tbody><tfoot><tr><td>Total</td><td>'+num(it.length)+'</td><td>100%</td><td></td></tr></tfoot>';
+}
+
+let ordemDet = {campo:'dias', desc:true};
+function desenhaDetalhe(it){
+  const COLS = [['grupo','Grupo'],['acao','Ação'],['caso','Caso'],['tipo','Tipo da pendência'],
+                ['fase','Fase'],['criado','Criado em'],['dias','Dias'],['prazo','Prazo'],['valor','Valor']];
+  const lista = [...it].sort((a,b)=>{
+    const campo = ordemDet.campo;
+    const r = typeof a[campo]==='number' ? a[campo]-b[campo]
+            : String(a[campo]).localeCompare(String(b[campo]),'pt-BR');
+    return ordemDet.desc ? -r : r;
+  });
+  const corte = lista.slice(0,500);
+  el('detInfo').textContent = '— ' + num(corte.length) + ' de ' + num(lista.length) + ' linhas' +
+    (lista.length>500 ? ' (use os filtros ou exporte o CSV para ver tudo)' : '');
+  el('tDet').innerHTML =
+    '<thead><tr>' + COLS.map(c=>'<th data-c="'+c[0]+'">'+c[1]+
+      (ordemDet.campo===c[0] ? (ordemDet.desc?' ▾':' ▴') : '')+'</th>').join('') + '</tr></thead><tbody>' +
+    corte.map(i=>'<tr><td>'+i.grupo+'</td><td>'+i.acao.replace(' pagamento','')+'</td><td>'+i.caso+'</td>' +
+      '<td><span class="tag '+classeTipo(i.tipo)+'">'+i.tipo+'</span></td><td>'+i.fase+'</td>' +
+      '<td>'+i.criado.split('-').reverse().join('/')+'</td><td>'+i.dias+'</td>' +
+      '<td>'+(i.prazo?i.prazo.split('-').reverse().join('/'):'·')+'</td>' +
+      '<td>'+(i.valor?brl(i.valor):'·')+'</td></tr>').join('') +
+    '</tbody>';
+  el('tDet').querySelectorAll('th').forEach(th=>th.onclick=()=>{
+    const c = th.dataset.c;
+    ordemDet = {campo:c, desc: ordemDet.campo===c ? !ordemDet.desc : true};
+    desenhaDetalhe(filtrados());
+  });
+}
+
+function csv(it){
+  const COLS = ['grupo','acao','caso','tipo','fase','criado','dias','faixa','prazo','valor'];
+  const linhas = [COLS.join(';')].concat(it.map(i=>COLS.map(c=>{
+    const v = (i[c] === undefined || i[c] === null) ? '' : i[c];
+    return typeof v==='number' ? String(v).replace('.',',') : '"'+String(v).replace(/"/g,'""')+'"';
+  }).join(';')));
+  const conteudo = "﻿" + linhas.join('\r\n');
+  const nome = 'esteira_pagamento.csv';
+
+  // publicado como Artifact o download passa pela capability; local, e o <a download> mesmo
+  if (SALVAR){
+    SALVAR.save({filename: nome, data: conteudo})
+      .catch(e => { if (e && e.code !== 'declined') aviso('Não foi possível baixar o CSV: ' + (e.message || e.code)); });
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([conteudo],{type:'text/csv;charset=utf-8'}));
+  a.download = nome;
+  a.click();
+}
+
+function aviso(texto){
+  const d = document.createElement('div');
+  d.style.cssText = 'margin:0 0 14px;padding:10px 13px;border:1px solid var(--bad-bd);' +
+                    'background:var(--bad-bg);border-radius:8px;color:var(--bad);font-size:12.5px';
+  d.textContent = texto;
+  document.querySelector('main').prepend(d);
+}
+
+// se a pagina estiver publicada, usa o salvamento do visualizador
+let SALVAR = null;
+if (window.claude && window.claude.use){
+  window.claude.use('downloads').then(d => { SALVAR = d; }).catch(() => {});
+}
+
+// ordem fixa da esteira: primeiro solicita, depois verifica.
+// o "Cumprimento Tipo da Pendencia" so e preenchido no Verificar, entao so aparece la.
+const ETAPAS = ['Solicitar pagamento', 'Verificar pagamento'];
+const CONFIG = {
+  'Solicitar pagamento': {
+    nota: 'Etapa 1. O <b>tipo da pend&ecirc;ncia n&atilde;o vale aqui</b> &mdash; o campo s&oacute; &eacute; preenchido no Verificar. ' +
+          'O que mede esta etapa &eacute; h&aacute; quanto tempo a solicita&ccedil;&atilde;o est&aacute; parada e quanto dinheiro est&aacute; preso nela.',
+    largo: ['gi', 'Grupo &times; idade'],
+    duplas: [['id', 'Idade da pend&ecirc;ncia (criado em)'],
+             ['vg', 'Valor em aberto por grupo'],
+             ['fa', 'Fase do processo'],
+             ['gr', 'Grupo']],
+  },
+  'Verificar pagamento': {
+    nota: 'Etapa 2. Aqui o tipo da pend&ecirc;ncia &eacute; o que manda: <b>Solicitado</b> = aguardando o pagamento, ' +
+          '<b>An&aacute;lise</b> = pendente com o cliente, <b>Expirado</b> = prazo estourado.',
+    largo: ['gt', 'Grupo &times; tipo da pend&ecirc;ncia'],
+    duplas: [['tp', 'Tipo da pend&ecirc;ncia'],
+             ['id', 'Idade da pend&ecirc;ncia (criado em)'],
+             ['ti', 'Tipo da pend&ecirc;ncia &times; idade'],
+             ['vt', 'Valor em aberto por tipo'],
+             ['gi', 'Grupo &times; idade'],
+             ['vg', 'Valor em aberto por grupo']],
+  },
+};
+
+function montaBloco(nome, indice){
+  const cfg = CONFIG[nome];
+  const s = document.createElement('section');
+  s.className = 'bloco b' + indice;
+  const card = ([chave, titulo]) =>
+    '<div class="sub-card"><h3>' + titulo + '</h3><div class="wrap"><table data-t="' + chave + '"></table></div></div>';
+  let html =
+    '<h2><span class="dot"></span>' + nome + ' <span class="qt"></span></h2>' +
+    '<p class="nota">' + cfg.nota + '</p>' +
+    '<div class="kpis"></div>' +
+    card(cfg.largo);
+  for (let n = 0; n < cfg.duplas.length; n += 2){
+    html += '<div class="row2" style="margin-top:20px">' +
+            cfg.duplas.slice(n, n + 2).map(card).join('') + '</div>';
+  }
+  s.innerHTML = html;
+  return s;
+}
+
+// desenha uma tabela do bloco conforme a chave
+function desenhaTabela(chave, tabela, sub){
+  if (chave === 'gt') desenhaPivot(tabela, sub, 'grupo', 'tipo', null, 'Grupo');
+  else if (chave === 'gi') desenhaPivot(tabela, sub, 'grupo', 'faixa', FAIXAS, 'Grupo');
+  else if (chave === 'id') desenhaRanking(tabela, sub, 'faixa', 'Idade', FAIXAS);
+  else if (chave === 'tp') desenhaRanking(tabela, sub, 'tipo', 'Tipo da pendência');
+  else if (chave === 'ti') desenhaPivot(tabela, sub, 'tipo', 'faixa', FAIXAS, 'Tipo da pendência');
+  else if (chave === 'gr') desenhaRanking(tabela, sub, 'grupo', 'Grupo');
+  else if (chave === 'fa') desenhaRanking(tabela, sub, 'fase', 'Fase', null, 12);
+  else if (chave === 'vg') desenhaValor(tabela, sub, 'grupo', 'Grupo');
+  else if (chave === 'vt') desenhaValor(tabela, sub, 'tipo', 'Tipo da pendência');
+}
+
+// ranking por dinheiro parado, nao por quantidade
+function desenhaValor(tabelaId, it, campo, rotulo){
+  const v = {}, q = {};
+  it.forEach(i => {
+    v[i[campo]] = (v[i[campo]]||0) + i.valor;
+    q[i[campo]] = (q[i[campo]]||0) + 1;
+  });
+  const chaves = Object.keys(v).sort((a,b)=>v[b]-v[a]);
+  const total = Object.values(v).reduce((x,y)=>x+y,0);
+  const max = Math.max(1, ...Object.values(v));
+  alvo(tabelaId).innerHTML =
+    '<thead><tr><th>'+rotulo+'</th><th>Qtde</th><th>Valor</th><th>%</th><th style="width:26%"></th></tr></thead><tbody>' +
+    chaves.map(k =>
+      '<tr><td><span class="tag '+classeTipo(k)+'">'+k+'</span></td><td>'+num(q[k])+'</td>' +
+      '<td>'+brl(v[k])+'</td><td>'+(total?(v[k]/total*100).toFixed(1):0)+'%</td>' +
+      '<td style="text-align:left"><span class="bar" style="width:'+(v[k]/max*100)+'%"></span></td></tr>').join('') +
+    '</tbody><tfoot><tr><td>Total</td><td>'+num(it.length)+'</td><td>'+brl(total)+'</td><td>100%</td><td></td></tr></tfoot>';
+}
+
+function render(){
+  const it = filtrados();
+
+  // comparativo das duas etapas lado a lado
+  desenhaPivot('tGeral', it, 'grupo', 'acao', ETAPAS, 'Grupo');
+
+  const destino = el('blocos');
+  destino.innerHTML = '';
+  ETAPAS.forEach((nome, n) => {
+    const sub = it.filter(i => i.acao === nome);
+    if (!sub.length && el('fAcao').value) return;   // etapa filtrada de fora
+    const bloco = montaBloco(nome, n + 1);
+    destino.appendChild(bloco);
+    bloco.querySelector('.qt').textContent =
+      num(sub.length) + ' pendências' +
+      (it.length ? ' · ' + (sub.length / it.length * 100).toFixed(0) + '% do total filtrado' : '');
+    if (!sub.length){
+      bloco.querySelector('.kpis').outerHTML = '<p class="vazio">Nenhuma pendência nesta etapa com os filtros atuais.</p>';
+      bloco.querySelectorAll('.row2').forEach(r => r.remove());
+      return;
+    }
+    kpis(bloco.querySelector('.kpis'), sub, nome);
+    bloco.querySelectorAll('table[data-t]').forEach(tab =>
+      desenhaTabela(tab.dataset.t, tab, sub));
+  });
+
+  desenhaDetalhe(it);
+}
+
+['fAcao','fGrupo','fTipo','fFaixa'].forEach(id=>el(id).onchange=render);
+el('fBusca').oninput = render;
+el('btnLimpar').onclick = function(){
+  ['fAcao','fGrupo','fTipo','fFaixa'].forEach(id=>el(id).value='');
+  el('fBusca').value=''; render();
+};
+el('btnCsv').onclick = ()=>csv(filtrados());
+render();
+</script>
+<!--/ARTEFATO-->
+</body>
+</html>
